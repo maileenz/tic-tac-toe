@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} light antialiased text-white bg-[hsl(28,97%,70%)] dark:bg-slate-950`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased text-white bg-[hsl(28,97%,70%)]`}
         suppressHydrationWarning
       >
         <div className="fixed inset-0 -z-[1]">

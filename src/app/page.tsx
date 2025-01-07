@@ -7,9 +7,11 @@ export default function HomePage() {
   return (
     <div className="w-full min-h-screen flex flex-col">
       <Header />
-      <Mascot />
-      <div className="flex-grow flex flex-col items-center pb-10">
-        <Board />
+      <div className="flex flex-col flex-grow justify-center -mt-10">
+        <Mascot />
+        <div className="flex flex-col items-center px-6 sm:px-14">
+          <Board />
+        </div>
       </div>
       <Footer />
     </div>

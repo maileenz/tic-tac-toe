@@ -19,7 +19,7 @@ export const Mascot = () => {
   return (
     <div className="relative overflow-hidden">
       <div id="qlogo">
-        <div className="mascot">
+        <div className="mascot z-20">
           <figure className="leaves">
             <span className="left-leaf">
               <span className="after"></span>
