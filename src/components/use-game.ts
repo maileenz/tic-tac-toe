@@ -1,104 +1,114 @@
-import { useEffect, useReducer, useRef } from "react";
-import type { TBoard, TMode } from "./types";
-import { calculateDraw, calculateWinLine, getAIMove } from "./helpers";
-import { initialState, modes, reducer } from "./constants";
+import { create } from "zustand";
+import type { TBoard, TMode, TPlayer, TState } from "./types";
+import { initialState, modes } from "./constants";
+import { calculateDraw, getAIMove, getWinningLine } from "./helpers";
 
-export const useGame = () => {
-  const [state, setState] = useReducer(reducer, {
-    ...initialState,
-    mode: modes.MEDIUM,
-  });
-  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  const { currentMove, gameOver, board, thinking, started, mode } = state;
-  const yourTurn = currentMove % 2 === 0;
+type Game = TState & {
+  timeoutId: NodeJS.Timeout | null;
+  setTimeout: (callback: () => void) => void;
+  clearTimeout: () => void;
+  setMode: (mode: TMode) => void;
+  runAIMove: (board: TBoard) => void;
+  clickBox: (index: number) => () => void;
+  restartGame: () => void;
+  setPlayer: (player: TPlayer) => void;
+};
 
-  const restartGame = () => {
-    clearTimeout(timeoutRef.current);
-    setState(initialState);
-  };
+export const useGame = create<Game>((set, get) => ({
+  ...initialState,
+  player: 1,
+  mode: modes.MEDIUM,
+  timeoutId: null,
+  setTimeout: (callback) => {
+    const randomDelay = 800 + Math.random() * 1200;
+    const timeoutId = setTimeout(() => {
+      callback();
+      set({ timeoutId: null }); // Clear the reference after the timeout is done
+    }, randomDelay);
 
-  const setMode = (mode: TMode) => {
-    if (started) {
+    set({ timeoutId });
+  },
+  clearTimeout: () => {
+    const { timeoutId } = get();
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      set({ timeoutId: null });
+    }
+  },
+  setMode: (mode) => set({ mode }),
+  runAIMove: (board) => {
+    get().clearTimeout();
+    const player = get().player;
+    const mode = get().mode;
+    const boxIndex = getAIMove(board, mode, -player as TPlayer);
+    if (typeof boxIndex !== "number") {
       return;
     }
+    set({
+      thinking: true,
+    });
+    get().setTimeout(() => {
+      const nextBoard = board.slice() as TBoard;
+      nextBoard[boxIndex] = -player;
+      const winLine = getWinningLine(nextBoard, -player as TPlayer);
+      set({
+        board: nextBoard,
+        thinking: false,
+        currentMove: winLine ? undefined : get().currentMove + 1,
+        winLine: winLine ?? undefined,
+        loss: !!winLine,
+        draw: !winLine && calculateDraw(nextBoard),
+        gameOver: !!winLine,
+      });
 
-    setState({ mode });
-  };
-
-  const clickBox = (boxIndex: number) => () => {
-    if (gameOver || thinking || board[boxIndex] !== 0) {
+      get().clearTimeout();
+    });
+  },
+  clickBox: (boxIndex: number) => () => {
+    if (get().gameOver || get().thinking || get().board[boxIndex] !== 0) {
       return;
     }
-    clearTimeout(timeoutRef.current);
-
-    setState({ started: true });
-
-    const nextBoard = board.slice() as TBoard;
-
-    nextBoard[boxIndex] = 1;
-
-    setState({
+    const player = get().player;
+    set({ started: true });
+    const nextBoard = get().board.slice() as TBoard;
+    nextBoard[boxIndex] = player;
+    set({
       board: nextBoard,
     });
 
-    const winLine = calculateWinLine(nextBoard);
+    const winLine = getWinningLine(nextBoard, player);
 
     if (winLine) {
-      setState({
+      set({
         win: true,
         gameOver: true,
         winLine,
       });
     } else if (calculateDraw(nextBoard)) {
-      setState({
+      set({
         draw: true,
         gameOver: true,
       });
     } else {
-      setState({
-        currentMove: currentMove + 1,
+      set({
+        currentMove: get().currentMove + 1,
       });
 
-      const { boxIndex, winLine } = getAIMove(nextBoard, mode);
-
-      if (typeof boxIndex === "number") {
-        setState({
-          thinking: true,
-        });
-        const randomDelay = 800 + Math.random() * 1200;
-        timeoutRef.current = setTimeout(() => {
-          const _nextBoard = nextBoard.slice() as TBoard;
-
-          _nextBoard[boxIndex] = -1;
-
-          setState({
-            board: _nextBoard,
-            thinking: false,
-            currentMove: winLine ? undefined : currentMove + 2,
-            winLine: winLine ?? undefined,
-            loss: !!winLine,
-            draw: !winLine && calculateDraw(_nextBoard),
-            gameOver: !!winLine,
-          });
-
-          clearTimeout(timeoutRef.current);
-        }, randomDelay);
-      }
+      get().runAIMove(nextBoard);
     }
-  };
-
-  useEffect(
-    () => () => {
-      clearTimeout(timeoutRef.current);
-    },
-    []
-  );
-
-  return {
-    ...state,
-    yourTurn,
-    restartGame,
-    clickBox,
-    setMode,
-  };
-};
+  },
+  restartGame: () => {
+    get().clearTimeout();
+    set(initialState);
+    if (get().player === -1) {
+      get().runAIMove(initialState.board);
+      set({ started: true });
+    }
+  },
+  setPlayer: (player) => {
+    set({
+      player,
+    });
+    get().restartGame();
+  },
+}));

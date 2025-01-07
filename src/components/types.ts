@@ -1,4 +1,6 @@
-import type { modes } from "./constants";
+import type { modes, players } from "./constants";
+
+export type TPlayer = (typeof players)[number];
 export type TMode = (typeof modes)[keyof typeof modes];
 export type TLine = [number, number, number];
 export type TBoard = [
@@ -16,6 +18,7 @@ export type TBoxProps = {
   boxIndex: number;
 };
 export type TState = {
+  player: TPlayer;
   board: TBoard;
   currentMove: number;
   started: boolean;
@@ -26,4 +29,5 @@ export type TState = {
   draw: boolean;
   mode: TMode;
   thinking: boolean;
+  turn: TPlayer;
 };

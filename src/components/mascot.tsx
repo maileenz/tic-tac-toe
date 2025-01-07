@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import { useGameContext } from "./context";
+import { useGame } from "./use-game";
 import "./mascot.css";
 
 export const Mascot = () => {
-  const { thinking, gameOver } = useGameContext();
+  const { thinking, gameOver } = useGame();
 
   const message = useMemo(() => {
     if (thinking) {

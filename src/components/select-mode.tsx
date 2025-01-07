@@ -1,7 +1,6 @@
 "use client";
 
 import { modes } from "./constants";
-import { useGameContext } from "./context";
 import {
   Select,
   SelectContent,
@@ -9,9 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { useGame } from "./use-game";
 
 export const SelectMode = () => {
-  const { mode, setMode } = useGameContext();
+  const { mode, setMode } = useGame();
 
   return (
     <Select defaultValue={mode} onValueChange={setMode}>

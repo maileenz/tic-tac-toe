@@ -1,5 +1,7 @@
 import type { TBoard, TState } from "./types";
 
+export const players = [1, -1] as const;
+
 export const modes = {
   EASY: "easy",
   MEDIUM: "medium",
@@ -21,4 +23,5 @@ export const initialState = {
   win: false,
   loss: false,
   thinking: false,
-} satisfies Omit<TState, "mode">;
+  turn: 1,
+} satisfies Omit<TState, "mode" | "player">;
